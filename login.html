@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  
+</body>
+
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B-CONEXUS Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      width: 320px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-weight: 700;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 8px #38ef7d;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #17b978;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #0f8c63;
+    }
+    .register-link {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .register-link a {
+      color: #a7ffeb;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .register-link a:hover {
+      text-decoration: underline;
+    }
+    .error-msg {
+      color: #ff8080;
+      font-weight: 600;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+  </style>
+
+  <!-- Firebase modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1QFK-SSTW03Im5MUy9FXoVIFd1PEdqL4",
+      authDomain: "b-conexus.firebaseapp.com",
+      databaseURL: "https://b-conexus-default-rtdb.firebaseio.com",
+      projectId: "b-conexus",
+      storageBucket: "b-conexus.firebasestorage.app",
+      messagingSenderId: "15021897204",
+      appId: "1:15021897204:web:fa8f097d6a8af3efe475a1",
+      measurementId: "G-NDFLV01HL7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    window.loginUser = async function () {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = '';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!email || !password) {
+        errorDiv.textContent = 'Please enter both email and password.';
+        return;
+      }
+
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Fetch user data from Realtime Database
+        const userSnapshot = await get(ref(database, 'users/' + user.uid));
+        if (!userSnapshot.exists()) {
+          errorDiv.textContent = 'User data not found. Please contact support.';
+          return;
+        }
+        const userData = userSnapshot.val();
+
+        // Optional: store userData in localStorage/session for later use
+        localStorage.setItem('bconexusUser', JSON.stringify(userData));
+
+        // Redirect to next page (dashboard.html)
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        errorDiv.textContent = error.message;
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>Log In to B-CONEXUS</h2>
+
+    <div id="error" class="error-msg"></div>
+
+    <label for="email">Email Address</label>
+    <input type="email" id="email" placeholder="email@example.com" required />
+
+    <label for="password">Password</label>
+    <input type="password" id="password" placeholder="Your password" required />
+
+    <button onclick="loginUser()">Log In</button>
+
+    <div class="register-link">
+      Don't have an account? <a href="register.html">Register here</a>
+    </div>
+  </div>
+</body>
+</html>

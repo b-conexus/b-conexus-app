@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+</head>
+
+<body>
+  
+</body>
+
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B-CONEXUS D</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2575fc, #6a11cb);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 20px 30px;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    header h1 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.8rem;
+    }
+    button.logout {
+      background: #ff3b2e;
+      border: none;
+      padding: 10px 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button.logout:hover {
+      background: #d12b20;
+    }
+    main {
+      flex: 1;
+      padding: 40px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    .welcome-msg {
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+    /* Placeholder box for future content */
+    .content-box {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 30px;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+<button id="chatBtn" title="Open Chat" style="
+  position: fixed;
+  bottom: 25px;
+  left: 25px;
+  background: #17b978;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 28px;
+  cursor: pointer;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transition: background 0.3s ease;
+">💬</button>
+
+<header>
+  <h1>B-CONEXUS</h1>
+  <button class="logout" onclick="logoutUser()">Logout</button>
+<button id="settingsBtn" title="Settings" style="
+  background: transparent; 
+  border: none; 
+  cursor: pointer; 
+  font-size: 1.6rem; 
+  color: white; 
+  margin-left: 15px;">
+  ⚙️
+</button>
+</header>
+
+<main>
+  <div class="welcome-msg" id="welcomeMsg">Welcome, User!</div>
+html
+<div id="settingsPanel" style="
+  display:none; 
+  background: rgba(0,0,0,0.4); 
+  padding: 20px; 
+  border-radius: 12px; 
+  max-width: 400px; 
+  width: 100%;
+  margin-top: 20px;
+  color: #eee;">
+  <h3>Edit Profile</h3>
+  <label for="fullNameInput">Full Name:</label><br />
+  <input type="text" id="fullNameInput" style="width: 100%; padding: 8px; border-radius: 6px; border:none; margin-bottom:15px;" />
+  <button onclick="saveProfile()" style="
+    padding: 10px 16px; 
+    background:#38ef7d; 
+    border:none; 
+    border-radius: 8px; 
+    font-weight: 600; 
+    cursor:pointer;
+color:#000;">Save</button>
+  <div id="saveMsg" style="margin-top:12px; font-weight:600;"></div>
+</div>
+  <div class="content-box">
+    
+  </div>
+</main>
+
+<script>
+  // Get user data from localStorage
+  const user = JSON.parse(localStorage.getItem('bconexusUser'));
+
+  const welcomeMsg = document.getElementById('welcomeMsg');
+  if(user && user.fullName) {
+    welcomeMsg.textContent = `Welcome, ${user.fullName}!`;
+  } else {
+    welcomeMsg.textContent = 'Welcome!';
+  }
+
+  function logoutUser() {
+    localStorage.removeItem('bconexusUser');
+    // Also sign out from Firebase Auth
+    import("https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js").then(({ getAuth, signOut }) => {
+      const auth = getAuth();
+      signOut(auth).then(() => {
+        window.location.href = 'login.html';
+      }).catch(() => {
+        window.location.href = 'login.html';
+      });
+    });
+  }
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const fullNameInput = document.getElementById('fullNameInput');
+const saveMsg = document.getElementById('saveMsg');
+const chatBtn = document.getElementById('chatBtn');
+
+settingsBtn.addEventListener('click', () => {
+  if(settingsPanel.style.display === 'none' || !settingsPanel.style.display) {
+    // Pre-fill input with current name
+    fullNameInput.value = user?.fullName || '';
+    settingsPanel.style.display = 'block';
+    saveMsg.textContent = '';
+  } else {
+    settingsPanel.style.display = 'none';
+  }
+});
+
+function saveProfile() {
+const newName = fullNameInput.value.trim();
+  if (!newName) {
+    saveMsg.style.color = '#ff7070';
+    saveMsg.textContent = 'Name cannot be empty!';
+    return;
+  }
+
+  // Update localStorage
+  user.fullName = newName;
+  localStorage.setItem('bconexusUser', JSON.stringify(user));
+
+  // Update Firebase Realtime Database user info
+  import("https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js").then(({ getDatabase, ref, update }) => {
+    import("https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js").then(({ getAuth }) => {
+      const db = getDatabase();
+      const auth = getAuth();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        saveMsg.style.color = '#ff7070';
+        saveMsg.textContent = 'User not logged in!';
+        return;
+      }
+      const updates = {};
+      updates['users/' + currentUser.uid + '/fullName'] = newName;
+      update(ref(db), updates).then(() => {
+        saveMsg.style.color = '#8cf59a';
+        saveMsg.textContent = 'Profile updated successfully!';
+        welcomeMsg.textContent = `Welcome, ${newName}!`;
+        setTimeout(() => {
+          settingsPanel.style.display = 'none';
+          saveMsg.textContent = '';
+        }, 2000);
+      }).catch(() => {
+        saveMsg.style.color = '#ff7070';
+
+saveMsg.textContent = 'Failed to update profile.';
+      });
+    });
+  });
+}
+
+chatBtn.addEventListener('click', () => {
+  window.location.href = 'chat.html';
+});
+</script>
+</script>
+
+</body>
+</html>

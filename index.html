@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B-CONEXUS Register</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      width: 320px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 24px;
+      font-weight: 700;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 18px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+    }
+    input:focus {
+      outline: none;
+      box-shadow: 0 0 8px #6a11cb;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #ff6f61;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: white;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #ff3b2e;
+    }
+    .login-link {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .login-link a {
+      color: #C87019;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+    .error-msg {
+      color: #ffb3b3;
+      font-weight: 600;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+  </style>
+
+  <!-- Firebase modular SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1QFK-SSTW03Im5MUy9FXoVIFd1PEdqL4",
+      authDomain: "b-conexus.firebaseapp.com",
+      databaseURL: "https://b-conexus-default-rtdb.firebaseio.com",
+      projectId: "b-conexus",
+      storageBucket: "b-conexus.firebasestorage.app",
+      messagingSenderId: "15021897204",
+      appId: "1:15021897204:web:fa8f097d6a8af3efe475a1",
+      measurementId: "G-NDFLV01HL7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const database = getDatabase(app);
+
+    window.registerUser = async function () {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = '';
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!fullName || !phone || !email || !password) {
+        errorDiv.textContent = 'Please fill in all required fields.';
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        // Save additional user data
+        await set(ref(database, 'users/' + user.uid), {
+          fullName,
+          phone,
+          email,
+          createdAt: Date.now()
+        });
+
+        alert('Registration successful! Redirecting to login...');
+        window.location.href = 'login.html';
+      } catch (error) {
+        errorDiv.textContent = error.message;
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h2>Create Account</h2>
+
+    <div id="error" class="error-msg"></div>
+
+    <label for="fullName">Full Name</label>
+    <input type="text" id="fullName" placeholder="Your full name" required />
+
+    <label for="phone">Phone Number</label>
+    <input type="tel" id="phone" placeholder="+254712345678" required pattern="^\+?[0-9]{10,15}$" />
+
+    <label for="email">Email Address</label>
+    <input type="email" id="email" placeholder="email@example.com" required />
+
+    <label for="password">Password</label>
+    <input type="number,letter,special keys" id="password" placeholder="at least 6 characters" required minlength="6" />
+
+    <button onclick="registerUser()">Register</button>
+
+    <div class="login-link">
+      Already registered? <a href="login.html">Log in here</a>
+    </div>
+  </div>
+</body>
+</html>

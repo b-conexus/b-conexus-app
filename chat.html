@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>B-CONEXUS Chat</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    #contacts {
+      width: 25%;
+      background: #1e2a38;
+      color: white;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    #chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f1f1f1;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    #inputArea {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+    }
+    input {
+      flex: 1;
+      margin-right: 10px;
+    }
+    .contact {
+      padding: 10px;
+      border-bottom: 1px solid #555;
+      cursor: pointer;
+    }
+    .online {
+      color: #4caf50;
+    }
+    .offline {
+      color: #f44336;
+    }
+  </style>
+</head>
+<body>
+
+<div id="contacts"><h3>Your Contacts</h3></div>
+<div id="chat">
+  <div id="messages"></div>
+  <div id="inputArea">
+    <input type="text" id="messageInput" placeholder="Type your message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyA1QFK-SSTW03Im5MUy9FXoVIFd1PEdqL4",
+    authDomain: "b-conexus.firebaseapp.com",
+    databaseURL: "https://b-conexus-default-rtdb.firebaseio.com",
+    projectId: "b-conexus",
+    storageBucket: "b-conexus.appspot.com",
+    messagingSenderId: "15021897204",
+    appId: "1:15021897204:web:fa8f097d6a8af3efe475a1",
+    measurementId: "G-NDFLV01HL7"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const currentUserId = localStorage.getItem("currentUserId"); // Must be set during login
+  let selectedUserId = null;
+
+  // Set user online
+  if (currentUserId) {
+    const userStatusRef = db.ref("users/" + currentUserId + "/online");
+    userStatusRef.set(true);
+    userStatusRef.onDisconnect().set(false);
+    window.addEventListener("beforeunload", () => userStatusRef.set(false));
+  }
+
+  // Load contacts
+  db.ref("users").once("value", (snapshot) => {
+    const contactsDiv = document.getElementById("contacts");
+    snapshot.forEach(child => {
+      const userId = child.key;
+      if (userId === currentUserId) return;
+      const user = child.val();
+      const contact = document.createElement("div");
+      contact.className = "contact";
+      contact.textContent = user.fullName + " - ";
+      const statusSpan = document.createElement("span");
+      statusSpan.textContent = user.online ? "Online" : "Offline";
+      statusSpan.className = user.online ? "online" : "offline";
+      contact.appendChild(statusSpan);
+      contact.onclick = () => {
+        selectedUserId = userId;
+        loadMessages();
+      };
+      contactsDiv.appendChild(contact);
+    });
+  });
+
+  function sendMessage() {
+    const text = document.getElementById("messageInput").value;
+    if (!text || !selectedUserId) return;
+    const chatRef = db.ref("chats").push();
+    chatRef.set({
+      sender: currentUserId,
+      receiver: selectedUserId,
+      text,
+      timestamp: Date.now()
+    });
+    document.getElementById("messageInput").value = "";
+  }
+
+  function loadMessages() {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "Loading messages...";
+    db.ref("chats").on("value", (snapshot) => {
+      messagesDiv.innerHTML = "";
+      snapshot.forEach((chat) => {
+        const msg = chat.val();
+        if ((msg.sender === currentUserId && msg.receiver === selectedUserId) ||
+            (msg.receiver === currentUserId && msg.sender === selectedUserId)) {
+          const msgDiv = document.createElement("div");
+          msgDiv.textContent = `msg.sender === currentUserId ? "You" : "Them":{msg.text}`;
+          messagesDiv.appendChild(msgDiv);
+        }
+      });
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+  }
+</script>
+</body>
+</html>
