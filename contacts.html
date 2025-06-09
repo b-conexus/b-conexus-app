@@ -1,0 +1,81 @@
+
+<html>
+<head>
+  <title>Contacts</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #c8e6c9, #e3f2fd);
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #2e7d32;
+    }
+    .contact {
+      background: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 10px 0;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .online { color: green; font-size: 12px; }
+    .offline { color: gray; font-size: 12px; }
+    .name { font-weight: bold; color: #333; }
+  </style>
+</head>
+<body>
+
+  <h2>Select a Contact</h2>
+  <div id="contactList">Loading...</div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyA1QFK-SSTW03Im5MUy9FXoVIFd1PEdqL4",
+      authDomain: "b-conexus.firebaseapp.com",
+      databaseURL: "https://b-conexus-default-rtdb.firebaseio.com",
+      projectId: "b-conexus",
+      storageBucket: "b-conexus.appspot.com",
+      messagingSenderId: "15021897204",
+      appId: "1:15021897204:web:fa8f097d6a8af3efe475a1"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const currentUserId = localStorage.getItem("currentUserId");
+    const contactList = document.getElementById("contactList");
+
+    db.ref("users").on("value", (snapshot) => {
+      contactList.innerHTML = "";
+      snapshot.forEach((child) => {
+        const userId = child.key;
+        const user = child.val();
+        if (userId === currentUserId) return;
+
+        const div = document.createElement("div");
+        div.className = "contact";
+        div.innerHTML = `
+          <span class="name">user.fullName || "Unnamed"</span>
+          <span class="{user.online ? 'online' : 'offline'}">
+            ${user.online ? 'Online' : 'Offline'}
+          </span>
+        `;
+        div.onclick = () => {
+          localStorage.setItem("chatWith", userId);
+          window.location.href = "chat.html";
+        };
+        contactList.appendChild(div);
+      });
+    });
+  </script>
+
+</body>
+</html>
+
