@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,44 +7,89 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 15px;
+      background: #f0f8ff;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
-    #chatBox {
-      height: 400px;
-      overflow-y: auto;
-      border: 1px solid #ccc;
+    header {
+      background: #00796b;
+      color: white;
       padding: 10px;
-      margin-bottom: 10px;
-      background: #f8f8f8;
+      text-align: center;
+    }
+    #messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
     }
     .message {
-      margin: 5px 0;
-      padding: 8px;
-      border-radius: 6px;
+      margin: 8px 0;
+      padding: 8px 12px;
+      border-radius: 10px;
       max-width: 70%;
-      clear: both;
     }
     .sent {
-      background-color: #dcf8c6;
-      float: right;
+      background: #c8e6c9;
+      align-self: flex-end;
       text-align: right;
     }
     .received {
-      background-color: #ffffff;
-      float: left;
+      background: #ffffff;
+      align-self: flex-start;
       text-align: left;
+    }
+    #inputArea {
+      display: flex;
+      padding: 10px;
+      background: #e0f2f1;
+    }
+    #inputArea input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #inputArea button {
+      background: #00796b;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      margin-left: 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      background: #e0f2f1;
+      color: #004d40;
     }
   </style>
 </head>
 <body>
 
-  <h3 id="contactName">Chat</h3>
-  <div id="chatBox"></div>
-  <input id="msgInput" placeholder="Type a message..." style="width: 70%;" />
-  <button onclick="sendMessage()">Send</button>
+  <header>
+    <h2>Chat with Contact</h2>
+  </header>
 
+  <div id="messages" style="display: flex; flex-direction: column;"></div>
+
+  <div id="inputArea">
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <footer>
+    © 2025 B-CONEXUS. Developed by <strong>Brigel Ochieng</strong>.
+  </footer>
+
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyA1QFK-SSTW03Im5MUy9FXoVIFd1PEdqL4",
@@ -58,54 +104,71 @@
     const db = firebase.database();
 
     const currentUserId = localStorage.getItem("currentUserId");
-    const selectedUserId = localStorage.getItem("chatWith");
-    const chatBox = document.getElementById("chatBox");
-
-    // Show contact's name
-    firebase.database().ref("users/" + selectedUserId).once("value").then(snapshot => {
-      const user = snapshot.val();
-      document.getElementById("contactName").textContent = user.fullName || "Chat";
-    });
-
-    function loadMessages() {
-      const chatId = currentUserId < selectedUserId
-        ? `currentUserId_{selectedUserId}`
-        : `selectedUserId_{currentUserId}`;
-
-      db.ref("chats/" + chatId).on("value", (snapshot) => {
-        chatBox.innerHTML = "";
-        snapshot.forEach((msg) => {
-          const data = msg.val();
-          const msgDiv = document.createElement("div");
-          msgDiv.textContent = data.text;
-          msgDiv.className = "message " + (data.sender === currentUserId ? "sent" : "received");
-          chatBox.appendChild(msgDiv);
-        });
-        chatBox.scrollTop = chatBox.scrollHeight;
-      });
-    }
+    const chatWith = localStorage.getItem("chatWith");
+    const messagesDiv = document.getElementById("messages");
 
     function sendMessage() {
-      const msgInput = document.getElementById("msgInput");
-      const message = msgInput.value.trim();
-      if (!message) return;
+      const input = document.getElementById("messageInput");
+      const text = input.value.trim();
+      if (text === "") return;
 
-      const chatId = currentUserId < selectedUserId
-        ? `currentUserId_{selectedUserId}`
-        : `selectedUserId_{currentUserId}`;
-
-      const newMsg = {
+      const newMsgRef = db.ref("messages").push();
+      newMsgRef.set({
         sender: currentUserId,
-        receiver: selectedUserId,
-        text: message,
+        receiver: chatWith,
+        message: text,
         timestamp: Date.now()
-      };
-
-      db.ref("chats/" + chatId).push(newMsg);
-      msgInput.value = "";
+      });
+      input.value = "";
     }
 
-    loadMessages();
+    function displayMessage(msg) {
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "message " + (msg.sender === currentUserId ? "sent" : "received");
+      msgDiv.textContent = msg.message;
+      messagesDiv.appendChild(msgDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Notifications
+    let lastMessageKey = null;
+
+    db.ref("messages").on("child_added", (snapshot) => {
+      const msg = snapshot.val();
+
+      if (
+        (msg.sender === chatWith && msg.receiver === currentUserId) ||
+        (msg.sender === currentUserId && msg.receiver === chatWith)
+      ) {
+        displayMessage(msg);
+      }
+      if (msg.sender === chatWith && msg.receiver === currentUserId) {
+        if (snapshot.key !== lastMessageKey) {
+          showToast("New message received");
+          lastMessageKey = snapshot.key;
+        }
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #323232;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 20px;
+        z-index: 9999;
+        opacity: 0.95;
+        font-size: 14px;
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
   </script>
 </body>
 </html>
